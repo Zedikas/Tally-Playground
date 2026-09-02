@@ -13,6 +13,8 @@ The project targets iOS 26 and supports iPhone and iPad. Counters and history ar
 
 ## Playground edition
 
-This is a standalone Playgrounds target. It does not depend on the original Xcode project, signing bridge, or extension targets, so the app can be opened directly by Swift Playgrounds.
+This is a standalone Playgrounds target. It is generated from the complete source of the original Tally app, while Xcode-only signing/extension integration remains excluded by the source's existing conditional compilation guards.
 
 The original Tally repository remains unchanged.
+
+Migration verification workflow updated 2026-09-03.
