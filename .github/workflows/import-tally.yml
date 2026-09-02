@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   import-and-verify:
+    # GitHub Actions cannot filter push events by commit message at the
+    # workflow trigger level, so the job itself is gated on the final !F commit.
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '!F')
     runs-on: macos-latest
     steps:
       - name: Checkout Playground repo
@@ -79,6 +82,43 @@ jobs:
           rm -f Tally.swiftpm/Sources/AppModule/Resources/Info.plist
           rm -f Tally.swiftpm/Sources/AppModule/Resources/LaunchScreen.storyboard
 
+      - name: Verify migration before committing
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f Tally.swiftpm/Package.swift || { echo 'ERROR: Package.swift missing'; exit 1; }
+          test -f Tally.swiftpm/Sources/AppModule/TallyApp.swift || { echo 'ERROR: TallyApp.swift missing'; exit 1; }
+          test -f Tally.swiftpm/Sources/AppModule/TallyStore.swift || { echo 'ERROR: TallyStore.swift missing'; exit 1; }
+          test -f Tally.swiftpm/Sources/AppModule/Models.swift || { echo 'ERROR: Models.swift missing'; exit 1; }
+          test -d Tally.swiftpm/Sources/AppModule/Resources/Assets.xcassets || { echo 'ERROR: Assets.xcassets missing'; exit 1; }
+          test -f Tally.swiftpm/Sources/AppModule/Resources/Localizable.xcstrings || { echo 'ERROR: Localizable.xcstrings missing'; exit 1; }
+
+          source_count=$(find _tally-source/Tally -maxdepth 1 -name '*.swift' -type f | wc -l | tr -d ' ')
+          package_count=$(find Tally.swiftpm/Sources/AppModule -maxdepth 1 -name '*.swift' -type f | wc -l | tr -d ' ')
+
+          echo "Source Swift files: $source_count"
+          echo "Playground Swift files: $package_count"
+
+          if [ "$package_count" -ne "$source_count" ]; then
+            echo "ERROR: Swift source count mismatch."
+            echo 'Source files:'
+            find _tally-source/Tally -maxdepth 1 -name '*.swift' -type f -print | sort
+            echo 'Playground files:'
+            find Tally.swiftpm/Sources/AppModule -maxdepth 1 -name '*.swift' -type f -print | sort
+            exit 1
+          fi
+
+          while IFS= read -r source_file; do
+            filename=$(basename "$source_file")
+            test -f "Tally.swiftpm/Sources/AppModule/$filename" || {
+              echo "ERROR: Missing migrated source file: $filename"
+              exit 1
+            }
+          done < <(find _tally-source/Tally -maxdepth 1 -name '*.swift' -type f | sort)
+
+          echo "Verified complete Tally source set: $package_count Swift files."
+
       - name: Persist the complete migration
         shell: bash
         run: |
@@ -93,17 +133,3 @@ jobs:
             git commit -m "Port complete Tally app to Swift Playground"
             git push
           fi
-
-      - name: Verify package structure and source parity
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f Tally.swiftpm/Package.swift
-          test -f Tally.swiftpm/Sources/AppModule/TallyApp.swift
-          test -f Tally.swiftpm/Sources/AppModule/TallyStore.swift
-          test -f Tally.swiftpm/Sources/AppModule/Models.swift
-          test -d Tally.swiftpm/Sources/AppModule/Resources/Assets.xcassets
-          test -f Tally.swiftpm/Sources/AppModule/Resources/Localizable.xcstrings
-          count=$(find Tally.swiftpm/Sources/AppModule -maxdepth 1 -name '*.swift' | wc -l | tr -d ' ')
-          test "$count" -eq 26
-          echo "Verified complete Tally source set: $count Swift files."
