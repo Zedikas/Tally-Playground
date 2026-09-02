@@ -29,7 +29,7 @@ let package = Package(
             path: "Sources/AppModule",
             resources: [
                 .process("Resources/Assets.xcassets"),
-                .copy("Resources/Localizable.xcstrings"),
+                .process("Resources/Localizable.strings"),
                 .copy("Resources/Tally2BuildMetadata.json")
             ]
         )
