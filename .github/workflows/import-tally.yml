@@ -10,8 +10,7 @@ permissions:
 
 jobs:
   import-and-verify:
-    # GitHub Actions cannot filter push events by commit message at the
-    # workflow trigger level, so the job itself is gated on the final !F commit.
+    # Only the final commit (!F) runs the migration. Manual dispatch remains available.
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '!F')
     runs-on: macos-latest
     steps:
@@ -123,13 +122,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           rm -rf _tally-source
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The repository can receive another commit while the runner is working.
+          # Rebase onto the current main before pushing so the generated package is
+          # not lost to a non-fast-forward race.
+          git fetch origin main
+          git rebase origin/main
+
           git add -A
           if git diff --cached --quiet; then
             echo "No migration changes to commit."
           else
             git commit -m "Port complete Tally app to Swift Playground"
-            git push
+            git push origin HEAD:main
           fi
