@@ -4,9 +4,7 @@ import AppleProductTypes
 
 let package = Package(
     name: "Tally Playground",
-    platforms: [
-        .iOS("26.0")
-    ],
+    platforms: [.iOS("26.0")],
     products: [
         .iOSApplication(
             name: "Tally",
@@ -14,12 +12,9 @@ let package = Package(
             bundleIdentifier: "com.samua.tally.playground",
             displayVersion: "2.0",
             bundleVersion: "23",
-            appIcon: .placeholder(icon: .numberSquare),
+            appIcon: .placeholder(icon: .calculator),
             accentColor: .presetColor(.pink),
-            supportedDeviceFamilies: [
-                .pad,
-                .phone
-            ],
+            supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
                 .portrait,
                 .landscapeRight,
@@ -29,10 +24,7 @@ let package = Package(
         )
     ],
     targets: [
-        .executableTarget(
-            name: "AppModule",
-            path: "Sources/AppModule"
-        )
+        .executableTarget(name: "AppModule", path: "Sources/AppModule")
     ],
     swiftLanguageVersions: [.version("6")]
 )
