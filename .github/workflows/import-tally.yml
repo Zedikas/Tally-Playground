@@ -24,7 +24,7 @@ jobs:
           path: _tally-source
           ref: main
 
-      - name: Build Playground package from the complete Tally source
+      - name: Build the complete Swift Playground package
         shell: bash
         run: |
           set -euo pipefail
@@ -32,7 +32,7 @@ jobs:
           rm -rf Tally.swiftpm
           mkdir -p Tally.swiftpm/Sources/AppModule
 
-          # Copy every Swift source file from the real app. Nothing is reimplemented here.
+          # Copy the actual Tally app source verbatim. Nothing is reimplemented.
           cp _tally-source/Tally/*.swift Tally.swiftpm/Sources/AppModule/
 
           if [ -d _tally-source/Tally/Resources ]; then
@@ -79,11 +79,7 @@ jobs:
           rm -f Tally.swiftpm/Sources/AppModule/Resources/Info.plist
           rm -f Tally.swiftpm/Sources/AppModule/Resources/LaunchScreen.storyboard
 
-          # Do not assume an Xcode workspace/scheme called Tally. Swift Playgrounds
-          # app packages are Swift packages and are built through their package path.
-          xcodebuild -resolvePackageDependencies -packagePath Tally.swiftpm
-
-      - name: Commit the complete migration
+      - name: Persist the complete migration
         shell: bash
         run: |
           set -euo pipefail
