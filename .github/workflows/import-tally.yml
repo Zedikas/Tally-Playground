@@ -1,0 +1,105 @@
+name: Import full Tally app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-and-verify:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Playground repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout full Tally source
+        uses: actions/checkout@v4
+        with:
+          repository: Zedikas/Tally
+          path: _tally-source
+          ref: main
+
+      - name: Build Playground package from the complete Tally source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf Tally.swiftpm
+          mkdir -p Tally.swiftpm/Sources/AppModule
+
+          # Copy every Swift source file from the real app. Nothing is reimplemented here.
+          cp _tally-source/Tally/*.swift Tally.swiftpm/Sources/AppModule/
+
+          # Copy the app resources that are meaningful inside a Swift package/playground.
+          if [ -d _tally-source/Tally/Resources ]; then
+            cp -R _tally-source/Tally/Resources Tally.swiftpm/Sources/AppModule/Resources
+          fi
+
+          # Playgrounds do not use the Xcode project/targets or signing-only companion targets.
+          # The source itself already gates the full-signing/AppDB integrations with compile flags.
+          cat > Tally.swiftpm/Package.swift <<'EOF'
+          // swift-tools-version: 6.0
+          import PackageDescription
+          import AppleProductTypes
+
+          let package = Package(
+              name: "Tally Playground",
+              platforms: [
+                  .iOS("26.0")
+              ],
+              products: [
+                  .iOSApplication(
+                      name: "Tally",
+                      targets: ["AppModule"],
+                      bundleIdentifier: "com.samua.tally.playground",
+                      displayVersion: "2.0",
+                      bundleVersion: "23",
+                      appIcon: .placeholder(icon: .calculator),
+                      accentColor: .presetColor(.pink),
+                      supportedDeviceFamilies: [.pad, .phone],
+                      supportedInterfaceOrientations: [
+                          .portrait,
+                          .landscapeRight,
+                          .landscapeLeft,
+                          .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+                      ]
+                  )
+              ],
+              targets: [
+                  .executableTarget(
+                      name: "AppModule",
+                      path: "Sources/AppModule",
+                      resources: [.process("Resources")]
+                  )
+              ],
+              swiftLanguageVersions: [.version("6")]
+          )
+          EOF
+
+          # Remove Xcode-only plist/storyboard files from the package resources if present.
+          rm -f Tally.swiftpm/Sources/AppModule/Resources/Info.plist
+          rm -f Tally.swiftpm/Sources/AppModule/Resources/LaunchScreen.storyboard
+
+          # Verify the package manifest and compile the actual iOS app target on macOS.
+          cd Tally.swiftpm
+          xcodebuild -scheme Tally -destination 'generic/platform=iOS' -configuration Debug build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Commit the complete migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _tally-source
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No migration changes to commit."
+            exit 0
+          fi
+          git commit -m "Port complete Tally app to Swift Playground"
+          git push
