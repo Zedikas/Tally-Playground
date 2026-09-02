@@ -27,7 +27,11 @@ let package = Package(
         .executableTarget(
             name: "AppModule",
             path: "Sources/AppModule",
-            resources: [.process("Resources")]
+            resources: [
+                .process("Resources/Assets.xcassets"),
+                .copy("Resources/Localizable.xcstrings"),
+                .copy("Resources/Tally2BuildMetadata.json")
+            ]
         )
     ],
     swiftLanguageVersions: [.version("6")]
