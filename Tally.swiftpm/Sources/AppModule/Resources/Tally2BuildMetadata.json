@@ -1,0 +1,22 @@
+{
+  "version": "2.0",
+  "build": 20,
+  "schema": "2.0",
+  "configuration": "AppDB-safe",
+  "coreFeatures": [
+    "stable folder IDs",
+    "in-folder pinning",
+    "in-screen Unfiled drag target",
+    "counter and folder drag reordering",
+    "full cosmetic JSON backups",
+    "Android-compatible sync packages",
+    "pauseable sessions",
+    "advanced reset schedules",
+    "local notifications",
+    "App Intents",
+    "distinct Counter and Completed symbols"
+  ],
+  "entitlementDependentFeatures": "Available through project-full.yml",
+  "pinBehavior": "Pinned counters remain at the top of their assigned folder",
+  "buildTrigger": "unfiled-and-cosmetic-backup-fix"
+}
