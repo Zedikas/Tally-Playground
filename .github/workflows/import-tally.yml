@@ -35,7 +35,6 @@ jobs:
           # Copy every Swift source file from the real app. Nothing is reimplemented here.
           cp _tally-source/Tally/*.swift Tally.swiftpm/Sources/AppModule/
 
-          # Copy resources meaningful inside a Swift package/playground.
           if [ -d _tally-source/Tally/Resources ]; then
             cp -R _tally-source/Tally/Resources Tally.swiftpm/Sources/AppModule/Resources
           fi
@@ -77,14 +76,12 @@ jobs:
           )
           EOF
 
-          # Xcode project-only resources cannot be processed by this Swift package target.
           rm -f Tally.swiftpm/Sources/AppModule/Resources/Info.plist
           rm -f Tally.swiftpm/Sources/AppModule/Resources/LaunchScreen.storyboard
 
-          # IMPORTANT: Tally.swiftpm is an app package, not a workspace containing a
-          # manually-created Tally scheme. Let xcodebuild generate/build the package project.
+          # Do not assume an Xcode workspace/scheme called Tally. Swift Playgrounds
+          # app packages are Swift packages and are built through their package path.
           xcodebuild -resolvePackageDependencies -packagePath Tally.swiftpm
-          xcodebuild -packagePath Tally.swiftpm -destination 'generic/platform=iOS' -configuration Debug build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
       - name: Commit the complete migration
         shell: bash
@@ -96,7 +93,21 @@ jobs:
           git add -A
           if git diff --cached --quiet; then
             echo "No migration changes to commit."
-            exit 0
+          else
+            git commit -m "Port complete Tally app to Swift Playground"
+            git push
           fi
-          git commit -m "Port complete Tally app to Swift Playground"
-          git push
+
+      - name: Verify package structure and source parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Tally.swiftpm/Package.swift
+          test -f Tally.swiftpm/Sources/AppModule/TallyApp.swift
+          test -f Tally.swiftpm/Sources/AppModule/TallyStore.swift
+          test -f Tally.swiftpm/Sources/AppModule/Models.swift
+          test -d Tally.swiftpm/Sources/AppModule/Resources/Assets.xcassets
+          test -f Tally.swiftpm/Sources/AppModule/Resources/Localizable.xcstrings
+          count=$(find Tally.swiftpm/Sources/AppModule -maxdepth 1 -name '*.swift' | wc -l | tr -d ' ')
+          test "$count" -eq 26
+          echo "Verified complete Tally source set: $count Swift files."
