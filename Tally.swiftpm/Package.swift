@@ -31,8 +31,10 @@ let package = Package(
                 .process("Resources/Assets.xcassets"),
                 .process("Resources/Localizable.strings"),
                 .copy("Resources/Tally2BuildMetadata.json")
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
             ]
         )
-    ],
-    swiftLanguageVersions: [.version("6")]
+    ]
 )
