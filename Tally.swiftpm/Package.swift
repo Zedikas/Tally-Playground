@@ -12,7 +12,7 @@ let package = Package(
             bundleIdentifier: "com.samua.tally.playground",
             displayVersion: "2.0",
             bundleVersion: "23",
-            appIcon: .placeholder(icon: .calculator),
+            appIcon: .asset("AppIcon"),
             accentColor: .presetColor(.pink),
             supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
