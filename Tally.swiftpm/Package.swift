@@ -12,8 +12,8 @@ let package = Package(
             bundleIdentifier: "com.samua.tally.playground",
             displayVersion: "2.0",
             bundleVersion: "23",
-            iconAssetName: "AppIcon",
-            accentColorAssetName: "AccentColor",
+            appIcon: .asset("AppIcon"),
+            accentColor: .asset("AccentColor"),
             supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
                 .portrait,
