@@ -12,8 +12,8 @@ let package = Package(
             bundleIdentifier: "com.samua.tally.playground",
             displayVersion: "2.0",
             bundleVersion: "23",
-            appIcon: .placeholder(icon: .calculator),
-            accentColor: .presetColor(.pink),
+            iconAssetName: "AppIcon",
+            accentColorAssetName: "AccentColor",
             supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
                 .portrait,
@@ -24,7 +24,17 @@ let package = Package(
         )
     ],
     targets: [
-        .executableTarget(name: "AppModule", path: "Sources/AppModule")
-    ],
-    swiftLanguageVersions: [.version("6")]
+        .executableTarget(
+            name: "AppModule",
+            path: "Sources/AppModule",
+            resources: [
+                .process("Resources/Assets.xcassets"),
+                .process("Resources/Localizable.strings"),
+                .copy("Resources/Tally2BuildMetadata.json")
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
+            ]
+        )
+    ]
 )
