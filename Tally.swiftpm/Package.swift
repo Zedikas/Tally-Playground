@@ -12,8 +12,8 @@ let package = Package(
             bundleIdentifier: "com.samua.tally.playground",
             displayVersion: "2.0",
             bundleVersion: "23",
-            appIcon: .asset("AppIcon"),
-            accentColor: .presetColor(.pink),
+            iconAssetName: "AppIcon",
+            accentColorAssetName: "AccentColor",
             supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
                 .portrait,
@@ -38,5 +38,3 @@ let package = Package(
         )
     ]
 )
-
-// AppIcon is generated into the asset catalog by the Playground icon workflow.
