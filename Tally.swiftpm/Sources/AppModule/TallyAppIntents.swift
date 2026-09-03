@@ -1,13 +1,10 @@
 import AppIntents
 import Foundation
-#if TALLY_APPDB_EXTENSIONS || TALLY_FULL_SIGNING
-import ActivityKit
-#endif
 
 struct IncrementTallyCounterIntent: AppIntent {
-    static var title: LocalizedStringResource = "Increment Tally Counter"
-    static var description = IntentDescription("Increase or decrease a Tally counter by name without opening the full interface.")
-    static var openAppWhenRun = false
+    static let title: LocalizedStringResource = "Increment Tally Counter"
+    static let description = IntentDescription("Increase or decrease a Tally counter by name without opening the full interface.")
+    static let openAppWhenRun = false
 
     @Parameter(title: "Counter Name")
     var counterName: String
@@ -36,9 +33,9 @@ struct IncrementTallyCounterIntent: AppIntent {
 }
 
 struct ReadTallyCounterIntent: AppIntent {
-    static var title: LocalizedStringResource = "Read Tally Counter"
-    static var description = IntentDescription("Return the current value of a Tally counter by name.")
-    static var openAppWhenRun = false
+    static let title: LocalizedStringResource = "Read Tally Counter"
+    static let description = IntentDescription("Return the current value of a Tally counter by name.")
+    static let openAppWhenRun = false
 
     @Parameter(title: "Counter Name")
     var counterName: String
@@ -58,9 +55,9 @@ struct ReadTallyCounterIntent: AppIntent {
 }
 
 struct StartTallySessionIntent: AppIntent {
-    static var title: LocalizedStringResource = "Start Tally Session"
-    static var description = IntentDescription("Start a standalone or counter-linked Tally session.")
-    static var openAppWhenRun = false
+    static let title: LocalizedStringResource = "Start Tally Session"
+    static let description = IntentDescription("Start a standalone or counter-linked Tally session.")
+    static let openAppWhenRun = false
 
     @Parameter(title: "Counter Name", description: "Leave blank for a standalone session.", default: "")
     var counterName: String
@@ -89,55 +86,17 @@ struct StartTallySessionIntent: AppIntent {
                 goalDuration: goal
             )
 
-            #if TALLY_APPDB_EXTENSIONS || TALLY_FULL_SIGNING
-            await TallyFullSigningBridge.shared.startLiveActivity(for: session, store: store)
-            #endif
-
+            await TallyLiveActivityManager.shared.startLiveActivity(for: session, store: store)
             return "Started \(session.title)."
         }.value
         return .result(dialog: IntentDialog(stringLiteral: message))
     }
 }
 
-#if TALLY_APPDB_EXTENSIONS || TALLY_FULL_SIGNING
-struct TestTallyLiveActivityIntent: AppIntent {
-    static var title: LocalizedStringResource = "Test Tally Live Activity"
-    static var description = IntentDescription("Start a five-minute diagnostic Tally session and request its Live Activity immediately.")
-    static var openAppWhenRun = true
-
-    func perform() async throws -> some IntentResult & ProvidesDialog {
-        let message = await Task { @MainActor in
-            guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-                return "Live Activities are disabled for Tally in iOS Settings. Enable them, then run this test again."
-            }
-
-            let store = TallyStore()
-            let session = store.startSession(
-                counterID: nil,
-                title: "Live Activity Test",
-                notes: "Diagnostic Live Activity test",
-                goalDuration: 5 * 60
-            )
-
-            await TallyFullSigningBridge.shared.startLiveActivity(for: session, store: store)
-
-            let isRunning = Activity<TallySessionActivityAttributes>.activities.contains {
-                $0.attributes.sessionID == session.id
-            }
-            return isRunning
-                ? "Live Activity started. Lock your iPhone now and look near the bottom of the Lock Screen."
-                : "Tally requested the Live Activity, but iOS did not report it as active."
-        }.value
-
-        return .result(dialog: IntentDialog(stringLiteral: message))
-    }
-}
-#endif
-
 struct OpenTallyIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Tally"
-    static var description = IntentDescription("Open Tally to your counters.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Open Tally"
+    static let description = IntentDescription("Open Tally to your counters.")
+    static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
         .result()
@@ -146,25 +105,16 @@ struct OpenTallyIntent: AppIntent {
 
 struct TallyAppShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
-        AppShortcut(
-            intent: OpenTallyIntent(),
-            phrases: [
-                "Open \(.applicationName)",
-                "Show my counters in \(.applicationName)"
-            ],
-            shortTitle: "Open Tally",
-            systemImageName: "number.circle.fill"
-        )
-
-        #if TALLY_APPDB_EXTENSIONS || TALLY_FULL_SIGNING
-        AppShortcut(
-            intent: TestTallyLiveActivityIntent(),
-            phrases: [
-                "Test Live Activity in \(.applicationName)"
-            ],
-            shortTitle: "Test Live Activity",
-            systemImageName: "waveform.path.ecg.rectangle"
-        )
-        #endif
+        [
+            AppShortcut(
+                intent: OpenTallyIntent(),
+                phrases: [
+                    "Open \(.applicationName)",
+                    "Show my counters in \(.applicationName)"
+                ],
+                shortTitle: "Open Tally",
+                systemImageName: "number.circle.fill"
+            )
+        ]
     }
 }
