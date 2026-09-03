@@ -17,6 +17,4 @@ This is a standalone Playgrounds target. It is generated from the complete sourc
 
 The original Tally repository remains unchanged.
 
-Migration verification workflow updated 2026-09-03.
-
-Triggering a full migration verification run. !F
+Triggering full migration and icon verification. !F
