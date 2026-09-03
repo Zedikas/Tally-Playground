@@ -104,17 +104,16 @@ struct OpenTallyIntent: AppIntent {
 }
 
 struct TallyAppShortcuts: AppShortcutsProvider {
+    @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
-        [
-            AppShortcut(
-                intent: OpenTallyIntent(),
-                phrases: [
-                    "Open \(.applicationName)",
-                    "Show my counters in \(.applicationName)"
-                ],
-                shortTitle: "Open Tally",
-                systemImageName: "number.circle.fill"
-            )
-        ]
+        AppShortcut(
+            intent: OpenTallyIntent(),
+            phrases: [
+                "Open \(.applicationName)",
+                "Show my counters in \(.applicationName)"
+            ],
+            shortTitle: "Open Tally",
+            systemImageName: "number.circle.fill"
+        )
     }
 }
