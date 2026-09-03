@@ -38,3 +38,5 @@ let package = Package(
         )
     ]
 )
+
+// AppIcon is generated into the asset catalog by the Playground icon workflow.
