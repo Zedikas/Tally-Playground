@@ -17,4 +17,4 @@ This is a standalone Playgrounds target. It is generated from the complete sourc
 
 The original Tally repository remains unchanged.
 
-Triggering full migration and icon verification. !F
+Custom Tally AppIcon asset installed.
