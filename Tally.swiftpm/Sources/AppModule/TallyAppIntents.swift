@@ -5,9 +5,9 @@ import ActivityKit
 #endif
 
 struct IncrementTallyCounterIntent: AppIntent {
-    static var title: LocalizedStringResource = "Increment Tally Counter"
-    static var description = IntentDescription("Increase or decrease a Tally counter by name without opening the full interface.")
-    static var openAppWhenRun = false
+    static let title: LocalizedStringResource = "Increment Tally Counter"
+    static let description = IntentDescription("Increase or decrease a Tally counter by name without opening the full interface.")
+    static let openAppWhenRun = false
 
     @Parameter(title: "Counter Name")
     var counterName: String
@@ -36,9 +36,9 @@ struct IncrementTallyCounterIntent: AppIntent {
 }
 
 struct ReadTallyCounterIntent: AppIntent {
-    static var title: LocalizedStringResource = "Read Tally Counter"
-    static var description = IntentDescription("Return the current value of a Tally counter by name.")
-    static var openAppWhenRun = false
+    static let title: LocalizedStringResource = "Read Tally Counter"
+    static let description = IntentDescription("Return the current value of a Tally counter by name.")
+    static let openAppWhenRun = false
 
     @Parameter(title: "Counter Name")
     var counterName: String
@@ -58,9 +58,9 @@ struct ReadTallyCounterIntent: AppIntent {
 }
 
 struct StartTallySessionIntent: AppIntent {
-    static var title: LocalizedStringResource = "Start Tally Session"
-    static var description = IntentDescription("Start a standalone or counter-linked Tally session.")
-    static var openAppWhenRun = false
+    static let title: LocalizedStringResource = "Start Tally Session"
+    static let description = IntentDescription("Start a standalone or counter-linked Tally session.")
+    static let openAppWhenRun = false
 
     @Parameter(title: "Counter Name", description: "Leave blank for a standalone session.", default: "")
     var counterName: String
@@ -101,9 +101,9 @@ struct StartTallySessionIntent: AppIntent {
 
 #if TALLY_APPDB_EXTENSIONS || TALLY_FULL_SIGNING
 struct TestTallyLiveActivityIntent: AppIntent {
-    static var title: LocalizedStringResource = "Test Tally Live Activity"
-    static var description = IntentDescription("Start a five-minute diagnostic Tally session and request its Live Activity immediately.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Test Tally Live Activity"
+    static let description = IntentDescription("Start a five-minute diagnostic Tally session and request its Live Activity immediately.")
+    static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let message = await Task { @MainActor in
@@ -135,9 +135,9 @@ struct TestTallyLiveActivityIntent: AppIntent {
 #endif
 
 struct OpenTallyIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Tally"
-    static var description = IntentDescription("Open Tally to your counters.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Open Tally"
+    static let description = IntentDescription("Open Tally to your counters.")
+    static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
         .result()
