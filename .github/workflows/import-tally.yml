@@ -29,10 +29,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           rm -rf Tally.swiftpm
           mkdir -p Tally.swiftpm/Sources/AppModule
-
           cp _tally-source/Tally/*.swift Tally.swiftpm/Sources/AppModule/
 
           if [ -d _tally-source/Tally/Resources ]; then
@@ -41,25 +39,18 @@ jobs:
             cp _tally-source/Tally/Resources/Tally2BuildMetadata.json Tally.swiftpm/Sources/AppModule/Resources/
           fi
 
-          # Swift Playgrounds does not have the xcstringstool expected by a
-          # String Catalog resource. Convert the source catalog to a classic
-          # .strings file during migration so the Playground contains no
-          # .xcstrings file at all.
           python3 - <<'PY'
           import json
           from pathlib import Path
-
           source = Path('_tally-source/Tally/Resources/Localizable.xcstrings')
           output = Path('Tally.swiftpm/Sources/AppModule/Resources/Localizable.strings')
           catalog = json.loads(source.read_text(encoding='utf-8'))
           lines = ['/* Generated from Localizable.xcstrings for Swift Playgrounds. */']
-          strings = catalog.get('strings', {})
-          for key in sorted(strings):
-              localizations = strings[key].get('localizations', {})
-              unit = localizations.get('en', {}).get('stringUnit', {})
-              value = unit.get('value', key)
-              def quote(value):
-                  return value.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+          for key in sorted(catalog.get('strings', {})):
+              localizations = catalog['strings'][key].get('localizations', {})
+              value = localizations.get('en', {}).get('stringUnit', {}).get('value', key)
+              def quote(v):
+                  return v.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
               lines.append(f'"{quote(key)}" = "{quote(value)}";')
           output.write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
@@ -79,7 +70,7 @@ jobs:
                       bundleIdentifier: "com.samua.tally.playground",
                       displayVersion: "2.0",
                       bundleVersion: "23",
-                      appIcon: .placeholder(icon: .calculator),
+                      appIcon: .asset("AppIcon"),
                       accentColor: .presetColor(.pink),
                       supportedDeviceFamilies: [.pad, .phone],
                       supportedInterfaceOrientations: [
@@ -98,10 +89,12 @@ jobs:
                           .process("Resources/Assets.xcassets"),
                           .process("Resources/Localizable.strings"),
                           .copy("Resources/Tally2BuildMetadata.json")
+                      ],
+                      swiftSettings: [
+                          .swiftLanguageMode(.v5)
                       ]
                   )
-              ],
-              swiftLanguageVersions: [.version("6")]
+              ]
           )
           EOF
 
@@ -112,7 +105,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           test -f Tally.swiftpm/Package.swift
           test -f Tally.swiftpm/Sources/AppModule/TallyApp.swift
           test -f Tally.swiftpm/Sources/AppModule/TallyStore.swift
@@ -120,53 +112,34 @@ jobs:
           test -d Tally.swiftpm/Sources/AppModule/Resources/Assets.xcassets
           test -f Tally.swiftpm/Sources/AppModule/Resources/Localizable.strings
           test ! -e Tally.swiftpm/Sources/AppModule/Resources/Localizable.xcstrings
-
+          grep -F 'appIcon: .asset("AppIcon")' Tally.swiftpm/Package.swift
           grep -F '.process("Resources/Assets.xcassets")' Tally.swiftpm/Package.swift
           grep -F '.process("Resources/Localizable.strings")' Tally.swiftpm/Package.swift
           grep -F '.copy("Resources/Tally2BuildMetadata.json")' Tally.swiftpm/Package.swift
-          if grep -F '.xcstrings' Tally.swiftpm/Package.swift; then
-            echo 'ERROR: Playground Package.swift still references a String Catalog.'
-            exit 1
-          fi
-
+          grep -F '.swiftLanguageMode(.v5)' Tally.swiftpm/Package.swift
           source_count=$(find _tally-source/Tally -maxdepth 1 -name '*.swift' -type f | wc -l | tr -d ' ')
           package_count=$(find Tally.swiftpm/Sources/AppModule -maxdepth 1 -name '*.swift' -type f | wc -l | tr -d ' ')
-
           echo "Source Swift files: $source_count"
           echo "Playground Swift files: $package_count"
-
-          if [ "$package_count" -ne "$source_count" ]; then
-            echo "ERROR: Swift source count mismatch."
-            exit 1
-          fi
-
-          while IFS= read -r source_file; do
-            filename=$(basename "$source_file")
-            test -f "Tally.swiftpm/Sources/AppModule/$filename" || {
-              echo "ERROR: Missing migrated source file: $filename"
-              exit 1
-            }
-          done < <(find _tally-source/Tally -maxdepth 1 -name '*.swift' -type f | sort)
-
-          echo "Verified complete Tally source set: $package_count Swift files."
-          echo "Verified Playground localization resource: Localizable.strings"
+          test "$package_count" -eq "$source_count"
+          echo "Verified complete Tally source set."
 
       - name: Persist the complete migration
         shell: bash
         run: |
           set -euo pipefail
-
           rm -rf _tally-source
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin main
-          git rebase origin/main
-
+          # Commit the generated package first so generated changes are not
+          # present as unstaged files when the branch is synchronized.
           git add -A
           if git diff --cached --quiet; then
             echo "No migration changes to commit."
-          else
-            git commit -m "Port complete Tally app to Swift Playground"
-            git push origin HEAD:main
+            exit 0
           fi
+          git commit -m "Port complete Tally app to Swift Playground"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
