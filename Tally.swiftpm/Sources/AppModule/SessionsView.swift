@@ -42,7 +42,7 @@ struct SessionsView: View {
                                     notes: last.notes,
                                     goalDuration: last.goalDuration
                                 )
-                                Task { await TallyFullSigningBridge.shared.startLiveActivity(for: session, store: store) }
+                                Task { await TallyLiveActivityManager.shared.startLiveActivity(for: session, store: store) }
                             } label: {
                                 Label("Resume Last Session", systemImage: "arrow.clockwise.circle.fill")
                                     .font(.headline)
@@ -185,7 +185,7 @@ struct NewSessionView: View {
                             notes: notes,
                             goalDuration: goalDuration
                         )
-                        Task { await TallyFullSigningBridge.shared.startLiveActivity(for: session, store: store) }
+                        Task { await TallyLiveActivityManager.shared.startLiveActivity(for: session, store: store) }
                         dismiss()
                     }
                 }
@@ -255,24 +255,24 @@ struct ActiveSessionRow: View {
 
     private func pause() {
         store.pauseSession(session)
-        Task { await TallyFullSigningBridge.shared.updateLiveActivities(from: store) }
+        Task { await TallyLiveActivityManager.shared.updateLiveActivities(from: store) }
     }
 
     private func resume() {
         store.resumeSession(session)
-        Task { await TallyFullSigningBridge.shared.updateLiveActivities(from: store) }
+        Task { await TallyLiveActivityManager.shared.updateLiveActivities(from: store) }
     }
 
     private func finish() {
         let id = session.id
         store.endSession(session)
-        Task { await TallyFullSigningBridge.shared.endLiveActivity(sessionID: id, store: store) }
+        Task { await TallyLiveActivityManager.shared.endLiveActivity(sessionID: id, store: store) }
     }
 
     private func cancel() {
         let id = session.id
         store.cancelSession(session)
-        Task { await TallyFullSigningBridge.shared.endLiveActivity(sessionID: id, store: store) }
+        Task { await TallyLiveActivityManager.shared.endLiveActivity(sessionID: id, store: store) }
     }
 }
 
@@ -305,7 +305,7 @@ struct FinishedSessionRow: View {
                         notes: session.notes,
                         goalDuration: session.goalDuration
                     )
-                    Task { await TallyFullSigningBridge.shared.startLiveActivity(for: restarted, store: store) }
+                    Task { await TallyLiveActivityManager.shared.startLiveActivity(for: restarted, store: store) }
                 }
                 Button("Delete Session", systemImage: "trash", role: .destructive) { showingDeleteConfirmation = true }
             } label: { Image(systemName: "ellipsis.circle").font(.title3) }
