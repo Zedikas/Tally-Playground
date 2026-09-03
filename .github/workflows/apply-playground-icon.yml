@@ -1,0 +1,74 @@
+name: Apply Tally Playground icon
+
+on:
+  workflow_run:
+    workflows: ["Import full Tally app"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-icon:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install ImageMagick
+        run: |
+          if ! command -v magick >/dev/null 2>&1; then
+            brew install imagemagick
+          fi
+
+      - name: Create Tally AppIcon asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          icon_dir="Tally.swiftpm/Sources/AppModule/Resources/Assets.xcassets/AppIcon.appiconset"
+          mkdir -p "$icon_dir"
+          base64 --decode > "$icon_dir/AppIcon.png" <<'ICONBASE64'
+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
+ICONBASE64
+          cat > "$icon_dir/Contents.json" <<'JSON'
+{
+  "images" : [
+    {
+      "filename" : "AppIcon.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
+JSON
+
+      - name: Ensure manifest uses AppIcon
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+from pathlib import Path
+p = Path('Tally.swiftpm/Package.swift')
+s = p.read_text()
+s = s.replace('appIcon: .placeholder(icon: .calculator)', 'appIcon: .asset("AppIcon")')
+p.write_text(s)
+PY
+
+      - name: Commit icon
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Tally.swiftpm/Package.swift Tally.swiftpm/Sources/AppModule/Resources/Assets.xcassets/AppIcon.appiconset
+          if git diff --cached --quiet; then
+            echo "Icon already applied"
+          else
+            git commit -m "Add Tally custom app icon to Playground"
+            git push origin HEAD:main
+          fi
